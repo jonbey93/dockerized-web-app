@@ -6,6 +6,33 @@ from models.user import User
 
 auth_bp = Blueprint("auth", __name__)
 
+
+@auth_bp.route("/register", methods=["POST"])
+def register():
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({"error": "Missing fields"}), 400
+
+    # check if user already exists
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return jsonify({"error": "User already exists"}), 400
+
+    # create new user
+    user = User(email=email)
+    user.set_password(password)  # assumes bcrypt/werkzeug is used
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({
+        "msg": "User registered successfully",
+        "user": {"id": user.id, "email": user.email}
+    }), 201
+
+
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
@@ -30,6 +57,7 @@ def login():
         path="/"
     )
     return resp
+
 
 @auth_bp.route("/me", methods=["GET"])
 @jwt_required(locations=["cookies"])
