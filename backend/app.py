@@ -1,28 +1,49 @@
+import time
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
-app = Flask(__name__)
+from utils import db
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://myuser:mypassword@db:3306/mydb'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+def create_app():
+    app = Flask(__name__)
 
-db = SQLAlchemy(app)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://myuser:mypassword@db:3306/mydb'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-@app.route("/")
-def home():
-    return {"message": "Flask server is running!"}
+    db.init_app(app)
 
-@app.route("/db-test")
-def db_test():
-    try:
-        result = db.session.execute(text("SELECT 1")).scalar()
-        if result == 1:
-            return jsonify({"status": "success", "message": "Database connection OK"})
-        else:
-            return jsonify({"status": "error", "message": "Unexpected result from DB"}), 500
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    @app.route("/")
+    def home():
+        return {"message": "Flask server is running!"}
+
+    @app.route("/db-test")
+    def db_test():
+        try:
+            result = db.session.execute(text("SELECT 1")).scalar()
+            if result == 1:
+                return jsonify({"status": "success", "message": "Database connection OK"})
+            else:
+                return jsonify({"status": "error", "message": "Unexpected result from DB"}), 500
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+    
+    return app
 
 if __name__ == "__main__":
+    app = create_app()
+    for i in range(10):
+        try:
+            with app.app_context():
+                db.create_all()
+            print("Database connected!")
+            break
+        except OperationalError as e:
+            print(f"Database not ready, retrying ({i+1}/10)...")
+            time.sleep(2)
+    else:
+        print("Could not connect to database. Exiting.")
+        exit(1)
+
     app.run(host="0.0.0.0", port=5000, debug=True)
