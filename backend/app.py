@@ -1,18 +1,30 @@
 import time
 from flask import Flask, jsonify
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
-from utils import db
+from utils import db, jwt
+from routes.auth import auth_bp
 
 def create_app():
     app = Flask(__name__)
 
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://myuser:mypassword@db:3306/mydb'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config["JWT_SECRET_KEY"] = "super-secret"  # use env var
+    app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+    app.config["JWT_COOKIE_SECURE"] = False  # True in prod (HTTPS only)
+    app.config["JWT_COOKIE_SAMESITE"] = "Lax"
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = False  # can enable later
+
+    CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
 
     db.init_app(app)
+    jwt.init_app(app)
+    
+    app.register_blueprint(auth_bp, url_prefix="/auth")
 
     @app.route("/")
     def home():

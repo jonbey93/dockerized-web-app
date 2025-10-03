@@ -1,13 +1,69 @@
-import React from "react";
+import React, { useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";
+import axios from "axios";
 
-// Dummy page components for testing
+axios.defaults.baseURL = "http://localhost:5000";
+axios.defaults.withCredentials = true;
+
 function Landing() {
   return <h1>Landing Page</h1>;
 }
 
 function Login() {
-  return <h1>Login Page</h1>;
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [user, setUser] = useState(null);
+
+  const handleLogin = async () => {
+    try {
+      await axios.post("/auth/login", { email, password });
+
+      const res = await axios.get("/auth/me");
+      setUser(res.data);
+    } catch (err) {
+      console.error("Login failed:", err);
+      setUser(null);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post("/auth/logout");
+      setUser(null);
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
+
+  return (
+    <div>
+      <h1>Login Page</h1>
+      <input
+        type="text"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <br />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <br />
+      <button onClick={handleLogin}>Login</button>
+
+      {user ? (
+        <>
+          <p>✅ Logged in as {user.id} ({user.email})</p>
+          <button onClick={handleLogout}>Logout</button>
+        </>
+      ) : (
+        <p>❌ Not logged in</p>
+      )}
+    </div>
+  );
 }
 
 function Register() {
