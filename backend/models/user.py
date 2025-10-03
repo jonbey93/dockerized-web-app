@@ -10,7 +10,7 @@ class User(db.Model):
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
 
     def set_password(self, password: str):
-        salt = b"$2b$12$KIXQ6E0tJHW2hj0Z9qe6ru" #bcrypt.gensalt()
+        salt = b"$2b$12$KIXQ6E0tJHW2hj0Z9qe6ru" #bcrypt.gensalt() IN PRODUCTION
         self.password_hash = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
     def check_password(self, password: str) -> bool:

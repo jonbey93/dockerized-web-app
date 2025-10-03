@@ -13,11 +13,11 @@ def create_app():
 
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://myuser:mypassword@db:3306/mydb'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config["JWT_SECRET_KEY"] = "super-secret"  # use env var
+    app.config["JWT_SECRET_KEY"] = "super-secret"   # CHANGE IN PRODUCTION
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
-    app.config["JWT_COOKIE_SECURE"] = False  # True in prod (HTTPS only)
+    app.config["JWT_COOKIE_SECURE"] = False         # True IN PRODUCTION (HTTPS only)
     app.config["JWT_COOKIE_SAMESITE"] = "Lax"
-    app.config["JWT_COOKIE_CSRF_PROTECT"] = False  # can enable later
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = False   # ENABLE IN PRODUCTION
 
     CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
 
@@ -45,6 +45,8 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
+
+    # Retry logic to wait for the database on boot
     for i in range(10):
         try:
             with app.app_context():

@@ -16,14 +16,12 @@ def register():
     if not email or not password:
         return jsonify({"error": "Missing fields"}), 400
 
-    # check if user already exists
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return jsonify({"error": "User already exists"}), 400
 
-    # create new user
     user = User(email=email)
-    user.set_password(password)  # assumes bcrypt/werkzeug is used
+    user.set_password(password)
     db.session.add(user)
     db.session.commit()
 
@@ -48,6 +46,7 @@ def login():
     resp = make_response(
         jsonify(user={"id": user.id, "email": user.email})
     )
+    # set_access_cookies(resp, access_token)   # FOR PRODUCTION
     resp.set_cookie(
         "access_token_cookie",
         access_token,
@@ -71,6 +70,7 @@ def me():
         "id": user.id,
         "email": user.email
     })
+
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
